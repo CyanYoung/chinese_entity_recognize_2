@@ -129,3 +129,7 @@ if __name__ == '__main__':
     paths['sent'] = prefix + 'sent_train.pkl'
     paths['label'] = prefix + 'label_train.pkl'
     vectorize(paths)
+    paths['data'] = 'data/special/dev.json'
+    paths['sent'] = prefix + 'sent_dev.pkl'
+    paths['label'] = prefix + 'label_dev.pkl'
+    vectorize(paths)

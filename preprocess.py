@@ -22,6 +22,11 @@ homo_dict = load_poly(path_homo)
 syno_dict = load_poly(path_syno)
 
 
+def save(path_sent, sents):
+    with open(path_sent, 'w') as f:
+        json.dump(sents, f, ensure_ascii=False, indent=4)
+
+
 def general_prepare(path_txt, path_json):
     sents = dict()
     pairs = list()
@@ -38,8 +43,7 @@ def general_prepare(path_txt, path_json):
                 text = ''.join([pair['word'] for pair in pairs])
                 sents[text] = pairs
                 pairs = []
-    with open(path_json, 'w') as f:
-        json.dump(sents, f, ensure_ascii=False, indent=4)
+    save(path_json, sents)
 
 
 def make_name(pre_names, end_names, num):
@@ -165,11 +169,13 @@ def expand(word_mat, label_mat, fuse_sents, extra_sents):
     word_mat.extend(fuse_word_mat)
     label_mat.extend(fuse_label_mat)
     word_mat, label_mat = sync_shuffle(word_mat, label_mat)
-    bound = int(len(word_mat) * 0.9)
-    train_sents = list2dict(word_mat[:bound], label_mat[:bound])
+    bound1 = int(len(word_mat) * 0.7)
+    bound2 = int(len(word_mat) * 0.9)
+    train_sents = list2dict(word_mat[:bound1], label_mat[:bound1])
     train_sents.update(extra_sents)
-    test_sents = list2dict(word_mat[bound:], label_mat[bound:])
-    return train_sents, test_sents
+    dev_sents = list2dict(word_mat[bound1:bound2], label_mat[bound1:bound2])
+    test_sents = list2dict(word_mat[bound2:], label_mat[bound2:])
+    return train_sents, dev_sents, test_sents
 
 
 def special_prepare(paths):
@@ -192,11 +198,10 @@ def special_prepare(paths):
     with open(paths['fuse'], 'r') as f:
         fuse_sents = json.load(f)
     extra_sents = label_sent(paths['extra'])
-    train_sents, test_sents = expand(word_mat, label_mat, fuse_sents, extra_sents)
-    with open(paths['train'], 'w') as f:
-        json.dump(train_sents, f, ensure_ascii=False, indent=4)
-    with open(paths['test'], 'w') as f:
-        json.dump(test_sents, f, ensure_ascii=False, indent=4)
+    train_sents, dev_sents, test_sents = expand(word_mat, label_mat, fuse_sents, extra_sents)
+    save(paths['train'], train_sents)
+    save(paths['dev'], dev_sents)
+    save(paths['test'], test_sents)
 
 
 if __name__ == '__main__':
@@ -214,6 +219,7 @@ if __name__ == '__main__':
     paths['fuse'] = prefix + 'test.json'
     prefix = 'data/special/'
     paths['train'] = prefix + 'train.json'
+    paths['dev'] = prefix + 'dev.json'
     paths['test'] = prefix + 'test.json'
     paths['template'] = prefix + 'template.txt'
     paths['slot_dir'] = prefix + 'slot'

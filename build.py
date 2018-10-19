@@ -1,6 +1,6 @@
 import pickle as pk
 
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.layers import Input, Embedding
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
@@ -31,7 +31,7 @@ paths = {'rnn': 'model/rnn.h5',
          'rnn_crf_plot': 'model/plot/rnn_crf.png'}
 
 
-def load_feat(path_feats, name):
+def load_feat(path_feats):
     with open(path_feats['sent_train'], 'rb') as f:
         train_sents = pk.load(f)
     with open(path_feats['label_train'], 'rb') as f:
@@ -66,8 +66,8 @@ def compile(name, embed_mat, seq_len, class_num):
     return model
 
 
-def fit(name, epoch, embed_mat, label_inds, path_feats):
-    train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats, name)
+def fit(name, epoch, embed_mat, label_inds, path_feats, phase):
+    train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats)
     seq_len = len(train_sents[0])
     class_num = len(label_inds)
     model = compile(name, embed_mat, seq_len, class_num)
@@ -78,9 +78,17 @@ def fit(name, epoch, embed_mat, label_inds, path_feats):
 
 if __name__ == '__main__':
     path_feats = dict()
-    path_feats['sent_train'] = 'feat/sent_train.pkl'
-    path_feats['label_train'] = 'feat/label_train.pkl'
-    path_feats['sent_dev'] = 'feat/sent_dev.pkl'
-    path_feats['label_dev'] = 'feat/label_dev.pkl'
-    fit('rnn', 10, embed_mat, label_inds, path_feats)
-    fit('rnn_crf', 10, embed_mat, label_inds, path_feats)
+    prefix = 'feat/general/'
+    path_feats['sent_train'] = prefix + 'sent_train.pkl'
+    path_feats['label_train'] = prefix + 'label_train.pkl'
+    path_feats['sent_dev'] = prefix + 'sent_dev.pkl'
+    path_feats['label_dev'] = prefix + 'label_dev.pkl'
+    fit('rnn', 10, embed_mat, label_inds, path_feats, 'general')
+    fit('rnn_crf', 10, embed_mat, label_inds, path_feats, 'general')
+    prefix = 'feat/special/'
+    path_feats['sent_train'] = prefix + 'sent_train.pkl'
+    path_feats['label_train'] = prefix + 'label_train.pkl'
+    path_feats['sent_dev'] = prefix + 'sent_dev.pkl'
+    path_feats['label_dev'] = prefix + 'label_dev.pkl'
+    fit('rnn', 10, embed_mat, label_inds, path_feats, 'special')
+    fit('rnn_crf', 10, embed_mat, label_inds, path_feats, 'special')
