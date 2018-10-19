@@ -31,7 +31,7 @@ paths = {'rnn': 'model/rnn.h5',
          'rnn_crf_plot': 'model/plot/rnn_crf.png'}
 
 
-def load_feat(path_feats):
+def load_feat(path_feats, name):
     with open(path_feats['sent_train'], 'rb') as f:
         train_sents = pk.load(f)
     with open(path_feats['label_train'], 'rb') as f:
@@ -67,7 +67,7 @@ def compile(name, embed_mat, seq_len, class_num):
 
 
 def fit(name, epoch, embed_mat, label_inds, path_feats):
-    train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats)
+    train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats, name)
     seq_len = len(train_sents[0])
     class_num = len(label_inds)
     model = compile(name, embed_mat, seq_len, class_num)

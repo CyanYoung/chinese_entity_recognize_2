@@ -43,7 +43,7 @@ def general_prepare(path_txt, path_json):
     save(path_json, sents)
 
 
-def compose_name(pre_names, end_names, num):
+def make_name(pre_names, end_names, num):
     names = list()
     for i in range(num):
         pre_name = choice(pre_names)
@@ -52,7 +52,21 @@ def compose_name(pre_names, end_names, num):
     return names
 
 
-def convert(word_mat, label_mat):
+def dict2list(sents):
+    word_mat = list()
+    label_mat = list()
+    for pairs in sents.values():
+        words = list()
+        labels = list()
+        for pair in pairs:
+            words.append(pair['word'])
+            labels.append(pair['label'])
+        word_mat.append(words)
+        label_mat.append(labels)
+    return word_mat, label_mat
+
+
+def list2dict(word_mat, label_mat):
     sents = dict()
     for words, labels in zip(word_mat, label_mat):
         text = ''.join(words)
@@ -83,7 +97,7 @@ def select(part):
         return part
 
 
-def compose_sent(temps, slots, num):
+def make_sent(temps, slots, num):
     word_mat = list()
     label_mat = list()
     for i in range(num):
@@ -103,13 +117,18 @@ def compose_sent(temps, slots, num):
                 labels.extend(['O'] * len(word))
         word_mat.append(words)
         label_mat.append(labels)
-    words_labels = list(zip(word_mat, label_mat))
-    shuffle(words_labels)
-    word_mat, label_mat = zip(*words_labels)
-    bound = int(len(word_mat) * 0.9)
-    train_sents = convert(word_mat[:bound], label_mat[:bound])
-    test_sents = convert(word_mat[bound:], label_mat[bound:])
-    return train_sents, test_sents
+    return word_mat, label_mat
+
+
+def sync_shuffle(list1, list2):
+    pairs = list(zip(list1, list2))
+    shuffle(pairs)
+    return zip(*pairs)
+
+
+def sample(word_mat, label_mat, num):
+    word_mat, label_mat = sync_shuffle(word_mat, label_mat)
+    return word_mat[:num], label_mat[:num]
 
 
 def special_prepare(paths):
@@ -126,12 +145,19 @@ def special_prepare(paths):
         with open(os.path.join(paths['slot_dir'], file), 'r') as f:
             for line in f:
                 slots[label].append(line.strip())
-    names = compose_name(pre_names, end_names, num=100)
+    names = make_name(pre_names, end_names, num=500)
     slots['PER'].extend(names)
-    train_sents, test_sents = compose_sent(temps, slots, num=1000)
+    word_mat, label_mat = make_sent(temps, slots, num=1000)
     with open(paths['fuse'], 'r') as f:
         fuse_sents = json.load(f)
-    train_sents.update(fuse_sents)
+    fuse_word_mat, fuse_label_mat = dict2list(fuse_sents)
+    fuse_word_mat, fuse_label_mat = sample(fuse_word_mat, fuse_label_mat, num=2000)
+    word_mat.extend(fuse_word_mat)
+    label_mat.extend(fuse_label_mat)
+    word_mat, label_mat = sync_shuffle(word_mat, label_mat)
+    bound = int(len(word_mat) * 0.9)
+    train_sents = list2dict(word_mat[:bound], label_mat[:bound])
+    test_sents = list2dict(word_mat[bound:], label_mat[bound:])
     save(paths['train'], train_sents)
     save(paths['test'], test_sents)
 
