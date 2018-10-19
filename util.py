@@ -26,14 +26,11 @@ def load_pair(path):
 
 def load_poly(path):
     vocab = dict()
-    for word, cand in pd.read_csv(path).values:
+    for word, cand_str in pd.read_csv(path).values:
         if word not in vocab:
             vocab[word] = set()
-        if '/' in cand:
-            cands = cand.split('/')
-            vocab[word].update(cands)
-        else:
-            vocab[word].add(cand)
+        cands = cand_str.split('/')
+        vocab[word].update(cands)
     return vocab
 
 

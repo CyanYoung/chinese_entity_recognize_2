@@ -1,6 +1,9 @@
 import os
 
 import json
+import pandas as pd
+
+import re
 
 from random import shuffle, choice
 
@@ -19,11 +22,6 @@ homo_dict = load_poly(path_homo)
 syno_dict = load_poly(path_syno)
 
 
-def save(path_sent, sents):
-    with open(path_sent, 'w') as f:
-        json.dump(sents, f, ensure_ascii=False, indent=4)
-
-
 def general_prepare(path_txt, path_json):
     sents = dict()
     pairs = list()
@@ -40,7 +38,8 @@ def general_prepare(path_txt, path_json):
                 text = ''.join([pair['word'] for pair in pairs])
                 sents[text] = pairs
                 pairs = []
-    save(path_json, sents)
+    with open(path_json, 'w') as f:
+        json.dump(sents, f, ensure_ascii=False, indent=4)
 
 
 def make_name(pre_names, end_names, num):
@@ -97,7 +96,7 @@ def select(part):
         return part
 
 
-def make_sent(temps, slots, num):
+def generate(temps, slots, num):
     word_mat = list()
     label_mat = list()
     for i in range(num):
@@ -126,9 +125,51 @@ def sync_shuffle(list1, list2):
     return zip(*pairs)
 
 
-def sample(word_mat, label_mat, num):
+def sample(sents, num):
+    word_mat, label_mat = dict2list(sents)
     word_mat, label_mat = sync_shuffle(word_mat, label_mat)
     return word_mat[:num], label_mat[:num]
+
+
+def label_sent(path):
+    sents = dict()
+    for text, entity_str, label_str in pd.read_csv(path).values:
+        entitys = entity_str.split()
+        labels = label_str.split()
+        if len(entitys) != len(labels):
+            print('skip: %s', text)
+            continue
+        slots = ['O'] * len(text)
+        for entity, label in zip(entitys, labels):
+            heads = [iter.start() for iter in re.finditer(entity, text)]
+            span = len(entity)
+            for head in heads:
+                slots[head] = 'B-' + label
+                for i in range(1, span):
+                    if slots[head + i] != 'O':
+                        print('skip: %d of %s' % entity)
+                        continue
+                    slots[head + i] = 'I-' + label
+        pairs = list()
+        for word, label in zip(text, slots):
+            pair = dict()
+            pair['word'] = word
+            pair['label'] = label
+            pairs.append(pair)
+        sents[text] = pairs
+    return sents
+
+
+def expand(word_mat, label_mat, fuse_sents, extra_sents):
+    fuse_word_mat, fuse_label_mat = sample(fuse_sents, num=2000)
+    word_mat.extend(fuse_word_mat)
+    label_mat.extend(fuse_label_mat)
+    word_mat, label_mat = sync_shuffle(word_mat, label_mat)
+    bound = int(len(word_mat) * 0.9)
+    train_sents = list2dict(word_mat[:bound], label_mat[:bound])
+    train_sents.update(extra_sents)
+    test_sents = list2dict(word_mat[bound:], label_mat[bound:])
+    return train_sents, test_sents
 
 
 def special_prepare(paths):
@@ -147,19 +188,15 @@ def special_prepare(paths):
                 slots[label].append(line.strip())
     names = make_name(pre_names, end_names, num=500)
     slots['PER'].extend(names)
-    word_mat, label_mat = make_sent(temps, slots, num=1000)
+    word_mat, label_mat = generate(temps, slots, num=1000)
     with open(paths['fuse'], 'r') as f:
         fuse_sents = json.load(f)
-    fuse_word_mat, fuse_label_mat = dict2list(fuse_sents)
-    fuse_word_mat, fuse_label_mat = sample(fuse_word_mat, fuse_label_mat, num=2000)
-    word_mat.extend(fuse_word_mat)
-    label_mat.extend(fuse_label_mat)
-    word_mat, label_mat = sync_shuffle(word_mat, label_mat)
-    bound = int(len(word_mat) * 0.9)
-    train_sents = list2dict(word_mat[:bound], label_mat[:bound])
-    test_sents = list2dict(word_mat[bound:], label_mat[bound:])
-    save(paths['train'], train_sents)
-    save(paths['test'], test_sents)
+    extra_sents = label_sent(paths['extra'])
+    train_sents, test_sents = expand(word_mat, label_mat, fuse_sents, extra_sents)
+    with open(paths['train'], 'w') as f:
+        json.dump(train_sents, f, ensure_ascii=False, indent=4)
+    with open(paths['test'], 'w') as f:
+        json.dump(test_sents, f, ensure_ascii=False, indent=4)
 
 
 if __name__ == '__main__':

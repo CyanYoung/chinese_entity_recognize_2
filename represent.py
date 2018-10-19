@@ -91,8 +91,6 @@ def align_label(sents, path_label):
     ind_mat = np.array(ind_mat)
     with open(path_label, 'wb') as f:
         pk.dump(ind_mat, f)
-    print(len(ind_mat))
-    print(len(ind_mat[0][0]))
 
 
 def merge_vectorize(path_general_train, path_special_train):
