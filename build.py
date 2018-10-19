@@ -1,6 +1,6 @@
 import pickle as pk
 
-from keras.models import Model, load_model
+from keras.models import Model
 from keras.layers import Input, Embedding
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
@@ -25,8 +25,10 @@ with open(path_label_ind, 'rb') as f:
 funcs = {'rnn': rnn,
          'rnn_crf': rnn_crf}
 
-paths = {'rnn': 'model/rnn.h5',
-         'rnn_crf': 'model/rnn_crf.h5',
+paths = {'general_rnn': 'model/general/rnn.h5',
+         'general_rnn_crf': 'model/general/rnn_crf.h5',
+         'special_rnn': 'model/general/rnn.h5',
+         'special_rnn_crf': 'model/general/rnn_crf.h5',
          'rnn_plot': 'model/plot/rnn.png',
          'rnn_crf_plot': 'model/plot/rnn_crf.png'}
 
@@ -43,7 +45,7 @@ def load_feat(path_feats):
     return train_sents, train_labels, dev_sents, dev_labels
 
 
-def compile(name, embed_mat, seq_len, class_num):
+def define_model(name, embed_mat, seq_len, class_num):
     vocab_num, embed_len = embed_mat.shape
     embed = Embedding(input_dim=vocab_num, output_dim=embed_len,
                       weights=[embed_mat], input_length=seq_len, trainable=True)
@@ -53,15 +55,31 @@ def compile(name, embed_mat, seq_len, class_num):
     if name == 'rnn_crf':
         crf = CRF(class_num)
         output = func(embed_input, crf)
+    else:
+        output = func(embed_input, class_num)
+    return Model(input, output)
+
+
+def load_model(name, embed_mat, seq_len, class_num, phase):
+    model = define_model(name, embed_mat, seq_len, class_num)
+    path = map_item('_'.join([phase, name]), paths)
+    print(path)
+    model.load_weights(path)
+    return model
+
+
+def compile(name, embed_mat, seq_len, class_num, phase):
+    model = define_model(name, embed_mat, seq_len, class_num)
+    model.summary()
+    if phase == 'general':
+        plot_model(model, map_item(name + '_plot', paths), show_shapes=True)
+    if name == 'rnn_crf':
+        crf = CRF(class_num)
         loss = crf.loss_function
         acc = crf.accuracy
     else:
-        output = func(embed_input, class_num)
         loss = 'categorical_crossentropy'
         acc = 'accuracy'
-    model = Model(input, output)
-    model.summary()
-    plot_model(model, map_item(name + '_plot', paths), show_shapes=True)
     model.compile(loss=loss, optimizer=Adam(lr=0.001), metrics=[acc])
     return model
 
@@ -70,8 +88,12 @@ def fit(name, epoch, embed_mat, label_inds, path_feats, phase):
     train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats)
     seq_len = len(train_sents[0])
     class_num = len(label_inds)
-    model = compile(name, embed_mat, seq_len, class_num)
-    check_point = ModelCheckpoint(map_item(name, paths), monitor='val_loss', verbose=True, save_best_only=True)
+    if phase == 'special':
+        model = load_model(name, embed_mat, seq_len, class_num, phase)
+    else:
+        model = compile(name, embed_mat, seq_len, class_num, phase)
+    path = map_item('_'.join([phase, name]), paths)
+    check_point = ModelCheckpoint(path, monitor='val_loss', verbose=True, save_best_only=True)
     model.fit(train_sents, train_labels, batch_size=batch_size, epochs=epoch,
               verbose=True, callbacks=[check_point], validation_data=(dev_sents, dev_labels))
 
