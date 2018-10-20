@@ -63,7 +63,6 @@ def define_model(name, embed_mat, seq_len, class_num):
 def load_model(name, embed_mat, seq_len, class_num, phase):
     model = define_model(name, embed_mat, seq_len, class_num)
     path = map_item('_'.join([phase, name]), paths)
-    print(path)
     model.load_weights(path)
     return model
 

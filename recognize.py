@@ -31,10 +31,10 @@ models = {'general_rnn': load_model('rnn', embed_mat, seq_len, len(label_inds), 
           'special_rnn_crf': load_model('rnn_crf', embed_mat, seq_len, len(label_inds), 'special')}
 
 
-def predict(text, name):
+def predict(text, name, phase):
     seq = word2ind.texts_to_sequences([text])[0]
     pad_seq = pad_sequences([seq], maxlen=seq_len)
-    model = map_item(name, models)
+    model = map_item('_'.join([phase, name]), models)
     probs = model.predict(pad_seq)[0]
     inds = np.argmax(probs, axis=1)
     preds = [ind_labels[ind] for ind in inds[-len(text):]]
@@ -47,5 +47,5 @@ def predict(text, name):
 if __name__ == '__main__':
     while True:
         text = input('text: ')
-        print('rnn: %s' % predict(text, 'rnn'))
-        print('rnn_crf: %s' % predict(text, 'rnn_crf'))
+        print('rnn: %s' % predict(text, 'rnn', 'special'))
+        print('rnn_crf: %s' % predict(text, 'rnn_crf', 'special'))
