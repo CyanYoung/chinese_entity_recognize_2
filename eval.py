@@ -18,7 +18,7 @@ slots.remove('O')
 
 
 def align(sents):
-    trunc_texts = list()
+    align_texts = list()
     label_mat = list()
     for text, quaples in sents.items():
         labels = list()
@@ -27,19 +27,19 @@ def align(sents):
         while len(text) > seq_len:
             trunc_text = text[:seq_len]
             trunc_labels = labels[:seq_len]
-            trunc_texts.append(trunc_text)
+            align_texts.append(trunc_text)
             label_mat.append(trunc_labels)
             text = text[seq_len:]
             labels = labels[seq_len:]
-        trunc_texts.append(text)
+        align_texts.append(text)
         label_mat.append(labels)
-    return trunc_texts, label_mat
+    return align_texts, label_mat
 
 
-def test(name, trunc_texts, label_mat):
+def test(name, phase, align_texts, label_mat):
     pred_mat = list()
-    for text in trunc_texts:
-        pairs = predict(text, name)
+    for text in align_texts:
+        pairs = predict(text, phase, name)
         preds = [pred for word, pred in pairs]
         pred_mat.append(preds)
     f1 = flat_f1_score(label_mat, pred_mat, average='weighted', labels=slots)
@@ -52,6 +52,6 @@ if __name__ == '__main__':
     path = prefix + 'test.json'
     with open(path, 'r') as f:
         sents = json.load(f)
-    trunc_texts, label_mat = align(sents)
-    test('rnn', trunc_texts, label_mat)
-    test('rnn_crf', trunc_texts, label_mat)
+    align_texts, label_mat = align(sents)
+    test('rnn', 'special', align_texts, label_mat)
+    test('rnn_crf', 'special', align_texts, label_mat)
