@@ -27,8 +27,8 @@ funcs = {'rnn': rnn,
 
 paths = {'general_rnn': 'model/general/rnn.h5',
          'general_rnn_crf': 'model/general/rnn_crf.h5',
-         'special_rnn': 'model/general/rnn.h5',
-         'special_rnn_crf': 'model/general/rnn_crf.h5',
+         'special_rnn': 'model/special/rnn.h5',
+         'special_rnn_crf': 'model/special/rnn_crf.h5',
          'rnn_plot': 'model/plot/rnn.png',
          'rnn_crf_plot': 'model/plot/rnn_crf.png'}
 
@@ -67,18 +67,25 @@ def load_model(name, embed_mat, seq_len, class_num, phase):
     return model
 
 
-def compile(name, embed_mat, seq_len, class_num, phase):
-    model = define_model(name, embed_mat, seq_len, class_num)
-    model.summary()
-    if phase == 'general':
-        plot_model(model, map_item(name + '_plot', paths), show_shapes=True)
+def compile(name, embed_mat, seq_len, class_num):
+    vocab_num, embed_len = embed_mat.shape
+    embed = Embedding(input_dim=vocab_num, output_dim=embed_len,
+                      weights=[embed_mat], input_length=seq_len, trainable=True)
+    input = Input(shape=(seq_len,))
+    embed_input = embed(input)
+    func = map_item(name, funcs)
     if name == 'rnn_crf':
         crf = CRF(class_num)
+        output = func(embed_input, crf)
         loss = crf.loss_function
         acc = crf.accuracy
     else:
+        output = func(embed_input, class_num)
         loss = 'categorical_crossentropy'
         acc = 'accuracy'
+    model = Model(input, output)
+    model.summary()
+    plot_model(model, map_item(name + '_plot', paths), show_shapes=True)
     model.compile(loss=loss, optimizer=Adam(lr=0.001), metrics=[acc])
     return model
 
@@ -90,7 +97,7 @@ def fit(name, epoch, embed_mat, label_inds, path_feats, phase):
     if phase == 'special':
         model = load_model(name, embed_mat, seq_len, class_num, phase)
     else:
-        model = compile(name, embed_mat, seq_len, class_num, phase)
+        model = compile(name, embed_mat, seq_len, class_num)
     path = map_item('_'.join([phase, name]), paths)
     check_point = ModelCheckpoint(path, monitor='val_loss', verbose=True, save_best_only=True)
     model.fit(train_sents, train_labels, batch_size=batch_size, epochs=epoch,
