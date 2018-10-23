@@ -1,4 +1,10 @@
+import os
+
 import pandas as pd
+
+import logging
+import logging.handlers as handlers
+from time import strftime
 
 
 def load_word(path):
@@ -46,3 +52,23 @@ def map_item(name, items):
         return items[name]
     else:
         raise KeyError
+
+
+def load_triple(path):
+    triples = list()
+    for field1, field2, field3 in pd.read_csv(path).values:
+        triples.append((field1, field2, field3))
+    return triples
+
+
+def get_logger(name, path_dir):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    file = strftime('%Y%m%d_%H%M%S') + '.log'
+    path = os.path.join(path_dir, file)
+    fh = handlers.RotatingFileHandler(path, 'a', 0, 1)
+    fh.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(asctime)s %(message)s", "%Y-%m-%d %H:%M:%S")
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    return logger
