@@ -45,28 +45,6 @@ def load_feat(path_feats):
     return train_sents, train_labels, dev_sents, dev_labels
 
 
-def define_model(name, embed_mat, seq_len, class_num):
-    vocab_num, embed_len = embed_mat.shape
-    embed = Embedding(input_dim=vocab_num, output_dim=embed_len,
-                      weights=[embed_mat], input_length=seq_len, trainable=True)
-    input = Input(shape=(seq_len,))
-    embed_input = embed(input)
-    func = map_item(name, funcs)
-    if name == 'rnn_crf':
-        crf = CRF(class_num)
-        output = func(embed_input, crf)
-    else:
-        output = func(embed_input, class_num)
-    return Model(input, output)
-
-
-def load_model(name, embed_mat, seq_len, class_num, phase):
-    model = define_model(name, embed_mat, seq_len, class_num)
-    path = map_item('_'.join([phase, name]), paths)
-    model.load_weights(path)
-    return model
-
-
 def compile(name, embed_mat, seq_len, class_num):
     vocab_num, embed_len = embed_mat.shape
     embed = Embedding(input_dim=vocab_num, output_dim=embed_len,
@@ -94,10 +72,9 @@ def fit(name, epoch, embed_mat, label_inds, path_feats, phase):
     train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats)
     seq_len = len(train_sents[0])
     class_num = len(label_inds)
+    model = compile(name, embed_mat, seq_len, class_num)
     if phase == 'special':
-        model = load_model(name, embed_mat, seq_len, class_num, phase)
-    else:
-        model = compile(name, embed_mat, seq_len, class_num)
+        model.load_weights(map_item('_'.join(['general', name]), paths))
     path = map_item('_'.join([phase, name]), paths)
     check_point = ModelCheckpoint(path, monitor='val_loss', verbose=True, save_best_only=True)
     model.fit(train_sents, train_labels, batch_size=batch_size, epochs=epoch,

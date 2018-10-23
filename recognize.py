@@ -2,11 +2,34 @@ import pickle as pk
 
 import numpy as np
 
+from keras.models import Model, load_model
+from keras.layers import Input, Embedding
+
 from keras.preprocessing.sequence import pad_sequences
 
-from build import load_model
+from keras_contrib.layers import CRF
+
+from nn_arch import rnn, rnn_crf
 
 from util import map_item
+
+
+def define_nn_crf(name, embed_mat, seq_len, class_num):
+    vocab_num, embed_len = embed_mat.shape
+    embed = Embedding(input_dim=vocab_num, output_dim=embed_len,
+                      weights=[embed_mat], input_length=seq_len, trainable=True)
+    input = Input(shape=(seq_len,))
+    embed_input = embed(input)
+    func = map_item(name, funcs)
+    crf = CRF(class_num)
+    output = func(embed_input, crf)
+    return Model(input, output)
+
+
+def load_nn_crf(name, embed_mat, seq_len, class_num, phase):
+    model = define_nn_crf(name, embed_mat, seq_len, class_num)
+    model.load_weights(map_item('_'.join([phase, name]), paths))
+    return model
 
 
 seq_len = 100
@@ -25,10 +48,20 @@ ind_labels = dict()
 for label, ind in label_inds.items():
     ind_labels[ind] = label
 
-models = {'general_rnn': load_model('rnn', embed_mat, seq_len, len(label_inds), 'general'),
-          'general_rnn_crf': load_model('rnn_crf', embed_mat, seq_len, len(label_inds), 'general'),
-          'special_rnn': load_model('rnn', embed_mat, seq_len, len(label_inds), 'special'),
-          'special_rnn_crf': load_model('rnn_crf', embed_mat, seq_len, len(label_inds), 'special')}
+funcs = {'rnn': rnn,
+         'rnn_crf': rnn_crf}
+
+paths = {'general_rnn': 'model/general/rnn.h5',
+         'general_rnn_crf': 'model/general/rnn_crf.h5',
+         'special_rnn': 'model/special/rnn.h5',
+         'special_rnn_crf': 'model/special/rnn_crf.h5',
+         'rnn_plot': 'model/plot/rnn.png',
+         'rnn_crf_plot': 'model/plot/rnn_crf.png'}
+
+models = {'general_rnn': load_model(map_item('general_rnn', paths)),
+          'general_rnn_crf': load_nn_crf('rnn_crf', embed_mat, seq_len, len(label_inds), 'general'),
+          'special_rnn': load_model(map_item('special_rnn', paths)),
+          'special_rnn_crf': load_nn_crf('rnn_crf', embed_mat, seq_len, len(label_inds), 'special')}
 
 
 def predict(text, name, phase):

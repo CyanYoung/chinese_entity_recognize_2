@@ -39,7 +39,7 @@ def align(sents):
 def test(name, phase, align_texts, label_mat):
     pred_mat = list()
     for text in align_texts:
-        pairs = predict(text, phase, name)
+        pairs = predict(text, name, phase)
         preds = [pred for word, pred in pairs]
         pred_mat.append(preds)
     f1 = flat_f1_score(label_mat, pred_mat, average='weighted', labels=slots)
