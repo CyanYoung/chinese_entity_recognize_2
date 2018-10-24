@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 parser = ArgumentParser()
 parser.add_argument('-host', type=str, default='127.0.0.1')
-parser.add_argument('-port', type=str, default=2018)
+parser.add_argument('-port', type=str, default=2001)
 args = parser.parse_args()
 
 path_log_dir = 'log'
@@ -42,17 +42,39 @@ def map_slot(word, pred):
     return pred
 
 
+def insert(entity, label, fill_slots, entitys):
+    slot = map_slot(entity, zh_en[label])
+    fill_slots.append(slot)
+    entitys[slot].append(entity)
+
+
+def merge(pairs):
+    entitys = init_entity(slots)
+    fill_slots = list()
+    entity = ''
+    label = ''
+    for word, pred in pairs:
+        if pred[0] == 'B':
+            if entity:
+                insert(entity, label, fill_slots, entitys)
+            entity = word
+            label = pred[2:]
+        elif pred[0] == 'O':
+            if entity:
+                insert(entity, label, fill_slots, entitys)
+                entity = ''
+        else:
+            entity = entity + word
+    if entity:
+        insert(entity, label, fill_slots, entitys)
+    return entitys, fill_slots
+
+
 @app.route('/recognize', methods=['POST'])
 def response():
-    entitys = init_entity(slots)
     data = request.get_json()
     pairs = predict(data['content'], 'rnn_crf', 'special')
-    fill_slots = list()
-    for word, pred in pairs:
-        if pred != 'O':
-            slot = map_slot(word, zh_en[pred])
-            fill_slots.append(slot)
-            entitys[slot].append(word)
+    entitys, fill_slots = merge(pairs)
     data['intent'] = '_'.join(fill_slots)
     data['entity'] = entitys
     data_str = json.dumps(data, ensure_ascii=False)
@@ -61,4 +83,4 @@ def response():
 
 
 if __name__ == '__main__':
-    app.run(args.host, int(args.port))
+    app.run(args.host, int(args.port), debug=True)
