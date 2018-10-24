@@ -1,9 +1,5 @@
 import json
 
-from flask import Flask, request
-
-from argparse import ArgumentParser
-
 from recognize import predict
 
 from util import load_word, load_pair, load_triple, get_logger
@@ -15,13 +11,6 @@ path_label_key_slot = 'dict/label_key_slot.csv'
 slots = load_word(path_slot)
 zh_en = load_pair(path_zh_en)
 label_key_slot = load_triple(path_label_key_slot)
-
-app = Flask(__name__)
-
-parser = ArgumentParser()
-parser.add_argument('-host', type=str, default='127.0.0.1')
-parser.add_argument('-port', type=str, default=2001)
-args = parser.parse_args()
 
 path_log_dir = 'log'
 logger = get_logger('recognize', path_log_dir)
@@ -70,11 +59,11 @@ def merge(pairs):
     return entitys, fill_slots
 
 
-@app.route('/recognize', methods=['POST'])
-def response():
-    data = request.get_json()
-    pairs = predict(data['content'], 'rnn_crf', 'special')
+def response(text, name, phase):
+    data = dict()
+    pairs = predict(text, name, phase)
     entitys, fill_slots = merge(pairs)
+    data['content'] = text
     data['intent'] = '_'.join(fill_slots)
     data['entity'] = entitys
     data_str = json.dumps(data, ensure_ascii=False)
@@ -83,4 +72,6 @@ def response():
 
 
 if __name__ == '__main__':
-    app.run(args.host, int(args.port), debug=True)
+    while True:
+        text = input('text: ')
+        print(response(text, 'rnn_crf', 'special'))
