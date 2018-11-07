@@ -22,6 +22,8 @@ with open(path_embed, 'rb') as f:
 with open(path_label_ind, 'rb') as f:
     label_inds = pk.load(f)
 
+class_num = len(label_inds)
+
 funcs = {'rnn': rnn,
          'rnn_crf': rnn_crf}
 
@@ -68,10 +70,9 @@ def compile(name, embed_mat, seq_len, class_num):
     return model
 
 
-def fit(name, epoch, embed_mat, label_inds, path_feats, phase):
+def fit(name, epoch, embed_mat, class_num, path_feats, phase):
     train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats)
     seq_len = len(train_sents[0])
-    class_num = len(label_inds)
     model = compile(name, embed_mat, seq_len, class_num)
     if phase == 'special':
         model.load_weights(map_item('_'.join(['general', name]), paths))
@@ -88,12 +89,12 @@ if __name__ == '__main__':
     path_feats['label_train'] = prefix + 'label_train.pkl'
     path_feats['sent_dev'] = prefix + 'sent_dev.pkl'
     path_feats['label_dev'] = prefix + 'label_dev.pkl'
-    fit('rnn', 10, embed_mat, label_inds, path_feats, 'general')
-    fit('rnn_crf', 10, embed_mat, label_inds, path_feats, 'general')
+    fit('rnn', 10, embed_mat, class_num, path_feats, 'general')
+    fit('rnn_crf', 10, embed_mat, class_num, path_feats, 'general')
     prefix = 'feat/special/'
     path_feats['sent_train'] = prefix + 'sent_train.pkl'
     path_feats['label_train'] = prefix + 'label_train.pkl'
     path_feats['sent_dev'] = prefix + 'sent_dev.pkl'
     path_feats['label_dev'] = prefix + 'label_dev.pkl'
-    fit('rnn', 10, embed_mat, label_inds, path_feats, 'special')
-    fit('rnn_crf', 10, embed_mat, label_inds, path_feats, 'special')
+    fit('rnn', 10, embed_mat, class_num, path_feats, 'special')
+    fit('rnn_crf', 10, embed_mat, class_num, path_feats, 'special')
