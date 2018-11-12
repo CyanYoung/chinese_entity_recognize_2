@@ -22,8 +22,8 @@ homo_dict = load_poly(path_homo)
 syno_dict = load_poly(path_syno)
 
 
-def save(path_sent, sents):
-    with open(path_sent, 'w') as f:
+def save(path, sents):
+    with open(path, 'w') as f:
         json.dump(sents, f, ensure_ascii=False, indent=4)
 
 
