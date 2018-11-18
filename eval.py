@@ -8,6 +8,9 @@ from recognize import predict
 
 seq_len = 100
 
+path = 'data/general/test.json'
+with open(path, 'r') as f:
+    sents = json.load(f)
 path_label_ind = 'feat/label_ind.pkl'
 with open(path_label_ind, 'rb') as f:
     label_inds = pk.load(f)
@@ -48,10 +51,6 @@ def test(name, phase, align_texts, label_mat):
 
 
 if __name__ == '__main__':
-    prefix = 'data/general/'
-    path = prefix + 'test.json'
-    with open(path, 'r') as f:
-        sents = json.load(f)
     align_texts, label_mat = align(sents)
     test('rnn', 'special', align_texts, label_mat)
     test('rnn_crf', 'special', align_texts, label_mat)
