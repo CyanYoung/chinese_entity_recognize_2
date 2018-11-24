@@ -8,10 +8,10 @@ from recognize import predict
 
 seq_len = 100
 
-path = 'data/general/test.json'
-with open(path, 'r') as f:
-    sents = json.load(f)
+path_sent = 'data/general/test.json'
 path_label_ind = 'feat/label_ind.pkl'
+with open(path_sent, 'r') as f:
+    sents = json.load(f)
 with open(path_label_ind, 'rb') as f:
     label_inds = pk.load(f)
 
