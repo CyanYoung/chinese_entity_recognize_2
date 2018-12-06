@@ -1,7 +1,7 @@
 import json
 import pickle as pk
 
-from sklearn_crfsuite.metrics import flat_f1_score, flat_accuracy_score
+from sklearn.metrics import f1_score, accuracy_score
 
 from recognize import predict
 
@@ -21,8 +21,7 @@ slots.remove('O')
 
 
 def align(sents):
-    align_texts = list()
-    label_mat = list()
+    align_texts, label_mat = list(), list()
     for text, quaples in sents.items():
         labels = list()
         for quaple in quaples:
@@ -39,14 +38,22 @@ def align(sents):
     return align_texts, label_mat
 
 
+def flat(labels):
+    flat_labels = list()
+    for label in labels:
+        flat_labels.extend(label)
+    return flat_labels
+
+
 def test(name, phase, align_texts, label_mat):
     pred_mat = list()
     for text in align_texts:
         pairs = predict(text, name, phase)
         preds = [pred for word, pred in pairs]
         pred_mat.append(preds)
-    f1 = flat_f1_score(label_mat, pred_mat, average='weighted', labels=slots)
-    print('\n%s f1: %.2f - acc: %.2f' % (name, f1, flat_accuracy_score(label_mat, pred_mat)))
+    labels, preds = flat(label_mat), flat(pred_mat)
+    f1 = f1_score(labels, preds, average='weighted', labels=slots)
+    print('\n%s f1: %.2f - acc: %.2f' % (name, f1, accuracy_score(labels, preds)))
 
 
 if __name__ == '__main__':
