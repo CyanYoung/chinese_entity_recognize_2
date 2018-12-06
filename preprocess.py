@@ -28,7 +28,8 @@ def save(path, sents):
 
 
 def general_prepare(path_txt, path_json):
-    sents, pairs = dict(), list()
+    sents = dict()
+    pairs = list()
     with open(path_txt, 'r') as f:
         for line in f:
             line = line.strip()
