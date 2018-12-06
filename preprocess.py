@@ -28,8 +28,7 @@ def save(path, sents):
 
 
 def general_prepare(path_txt, path_json):
-    sents = dict()
-    pairs = list()
+    sents, pairs = dict(), list()
     with open(path_txt, 'r') as f:
         for line in f:
             line = line.strip()
@@ -56,11 +55,9 @@ def make_name(pre_names, end_names, num):
 
 
 def dict2list(sents):
-    word_mat = list()
-    label_mat = list()
+    word_mat, label_mat = list(), list()
     for pairs in sents.values():
-        words = list()
-        labels = list()
+        words, labels = list(), list()
         for pair in pairs:
             words.append(pair['word'])
             labels.append(pair['label'])
@@ -101,12 +98,10 @@ def select(part):
 
 
 def generate(temps, slots, num):
-    word_mat = list()
-    label_mat = list()
+    word_mat, label_mat = list(), list()
     for i in range(num):
         parts = choice(temps)
-        words = list()
-        labels = list()
+        words, labels = list(), list()
         for part in parts:
             if part in slots:
                 entity = choice(slots[part])
