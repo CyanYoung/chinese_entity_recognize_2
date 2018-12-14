@@ -47,7 +47,6 @@ def statistic(paths, name):
     count(paths['vocab_freq'], text_str, 'vocab', name)
     count(paths['len_freq'], text_lens, 'text_len', name)
     count(paths['slot_freq'], slots, 'slot', name)
-    print(len(slots), len(texts))
     print('%s slot_per_sent: %d' % (name, int(len(slots) / len(texts))))
 
 
