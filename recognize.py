@@ -58,9 +58,7 @@ funcs = {'rnn': rnn,
 paths = {'general_rnn': 'model/general/rnn.h5',
          'general_rnn_crf': 'model/general/rnn_crf.h5',
          'special_rnn': 'model/special/rnn.h5',
-         'special_rnn_crf': 'model/special/rnn_crf.h5',
-         'rnn_plot': 'model/plot/rnn.png',
-         'rnn_crf_plot': 'model/plot/rnn_crf.png'}
+         'special_rnn_crf': 'model/special/rnn_crf.h5'}
 
 models = {'general_rnn': load_model(map_item('general_rnn', paths)),
           'general_rnn_crf': load_nn_crf('rnn_crf', embed_mat, seq_len, len(label_inds), 'general'),
