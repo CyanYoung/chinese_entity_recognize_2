@@ -40,8 +40,7 @@ def insert(entity, label, fill_slots, entitys):
 def merge(pairs):
     entitys = init_entity(slots)
     fill_slots = list()
-    entity = ''
-    label = ''
+    entity, label = [''] * 2
     for word, pred in pairs:
         if pred[0] == 'B':
             if entity:
