@@ -48,12 +48,12 @@ def merge(pairs):
                 insert(entity, label, fill_slots, entitys)
             entity = word
             label = pred[2:]
-        elif pred[0] == 'O':
+        elif pred[0] == 'I':
+            entity = entity + word
+        else:
             if entity:
                 insert(entity, label, fill_slots, entitys)
                 entity = ''
-        else:
-            entity = entity + word
     if entity:
         insert(entity, label, fill_slots, entitys)
     return entitys, fill_slots
