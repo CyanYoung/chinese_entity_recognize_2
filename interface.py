@@ -73,4 +73,5 @@ def response(text, name, phase):
 if __name__ == '__main__':
     while True:
         text = input('text: ')
+        print(response(text, 'rnn', 'special'))
         print(response(text, 'rnn_crf', 'special'))
