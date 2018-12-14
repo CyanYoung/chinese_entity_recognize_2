@@ -142,13 +142,14 @@ def label_sent(path):
         slots = ['O'] * len(text)
         for entity, label in zip(entitys, labels):
             heads = [iter.start() for iter in re.finditer(entity, text)]
-            span = len(entity)
+            entity_len = len(entity)
             for head in heads:
+                tail = head + entity_len
+                if slots[head:tail] != ['O'] * entity_len:
+                    print('skip: %s in %s' % (entity, text))
+                    continue
                 slots[head] = 'B-' + label
-                for i in range(1, span):
-                    if slots[head + i] != 'O':
-                        print('skip: %d of %s' % entity)
-                        continue
+                for i in range(1, entity_len):
                     slots[head + i] = 'I-' + label
         pairs = list()
         for word, label in zip(text, slots):
