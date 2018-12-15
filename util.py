@@ -15,11 +15,6 @@ def load_word(path):
     return words
 
 
-def load_word_re(path):
-    words = load_word(path)
-    return '(' + ')|('.join(words) + ')'
-
-
 def load_pair(path):
     vocab = dict()
     for word1, word2 in pd.read_csv(path).values:

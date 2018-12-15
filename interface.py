@@ -2,25 +2,16 @@ import json
 
 from recognize import predict
 
-from util import load_word, load_pair, load_triple, get_logger
+from util import load_pair, load_triple, get_logger
 
 
-path_slot = 'dict/slot.txt'
 path_zh_en = 'dict/zh_en.csv'
 path_label_key_slot = 'dict/label_key_slot.csv'
-slots = load_word(path_slot)
 zh_en = load_pair(path_zh_en)
 label_key_slot = load_triple(path_label_key_slot)
 
 path_log_dir = 'log'
 logger = get_logger('recognize', path_log_dir)
-
-
-def init_entity(slots):
-    entitys = dict()
-    for slot in slots:
-        entitys[slot] = list()
-    return entitys
 
 
 def map_slot(word, pred):
@@ -31,40 +22,47 @@ def map_slot(word, pred):
     return pred
 
 
-def insert(entity, label, fill_slots, entitys):
+def insert(entity, label, entitys, slots):
+    entitys.append(entity)
     slot = map_slot(entity, zh_en[label])
-    fill_slots.append(slot)
-    entitys[slot].append(entity)
+    slots.append(slot)
+
+
+def make_dict(entitys, slots):
+    slot_dict = dict()
+    for slot, entity in zip(slots, entitys):
+        if slot not in slot_dict:
+            slot_dict[slot] = list()
+        slot_dict[slot].append(entity)
+    return slot_dict
 
 
 def merge(pairs):
-    entitys = init_entity(slots)
-    fill_slots = list()
+    entitys, slots = list(), list()
     entity, label = [''] * 2
     for word, pred in pairs:
         if pred[0] == 'B':
             if entity:
-                insert(entity, label, fill_slots, entitys)
+                insert(entity, label, entitys, slots)
             entity = word
             label = pred[2:]
         elif pred[0] == 'I':
             entity = entity + word
         else:
             if entity:
-                insert(entity, label, fill_slots, entitys)
+                insert(entity, label, entitys, slots)
                 entity = ''
     if entity:
-        insert(entity, label, fill_slots, entitys)
-    return entitys, fill_slots
+        insert(entity, label, entitys, slots)
+    return make_dict(entitys, slots)
 
 
 def response(text, name, phase):
     data = dict()
     pairs = predict(text, name, phase)
-    entitys, fill_slots = merge(pairs)
+    slot_dict = merge(pairs)
     data['content'] = text
-    data['intent'] = '_'.join(fill_slots)
-    data['entity'] = entitys
+    data['slot'] = slot_dict
     data_str = json.dumps(data, ensure_ascii=False)
     logger.info(data_str)
     return data_str
