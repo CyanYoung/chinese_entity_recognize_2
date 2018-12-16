@@ -10,3 +10,6 @@ __pycache__
 
 # exceed
 label_train.pkl
+
+# privacy
+*.log
