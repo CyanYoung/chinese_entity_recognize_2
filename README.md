@@ -20,7 +20,7 @@ special_prepare() 根据 template 采样实体进行填充，生成训练数据
 
 merge_vectorize() 合并 general 与 special 得到 embed_mat 与 label_ind
 
-为填充词增设标签 N，vectorize() 分别截取或填充为定长序列
+label2ind() 增设标签 N，vectorize() 分别截取或填充为定长序列
 
 #### 4.build
 
