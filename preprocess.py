@@ -13,8 +13,8 @@ from util import load_word, load_pair, load_poly
 path_zh_en = 'dict/zh_en.csv'
 path_pre_name = 'dict/pre_name.txt'
 path_end_name = 'dict/end_name.txt'
-path_homo = 'dict/homonym.csv'
-path_syno = 'dict/synonym.csv'
+path_homo = 'dict/homo.csv'
+path_syno = 'dict/syno.csv'
 zh_en = load_pair(path_zh_en)
 pre_names = load_word(path_pre_name)
 end_names = load_word(path_end_name)
