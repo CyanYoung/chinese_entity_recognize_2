@@ -46,12 +46,11 @@ def merge(pairs):
                 insert(entity, label, entitys, slots)
             entity = word
             label = pred[2:]
-        elif pred[:2] == 'I-':
+        elif pred[:2] == 'I-' and entity:
             entity = entity + word
-        else:
-            if entity:
-                insert(entity, label, entitys, slots)
-                entity = ''
+        elif entity:
+            insert(entity, label, entitys, slots)
+            entity = ''
     if entity:
         insert(entity, label, entitys, slots)
     return make_dict(entitys, slots)
