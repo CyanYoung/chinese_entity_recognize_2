@@ -4,7 +4,7 @@
 
 general_prepare() 将每行数据分割为 (word, pos, chunk, label) 二元组
 
-special_prepare() 根据 template 采样实体进行填充，生成训练数据
+special_prepare() 根据 template 采样实体进行填充、生成数据
 
 () 表示可省去，[] 表示可替换同音、同义词，make_name() 组合人名
 
