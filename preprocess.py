@@ -177,7 +177,7 @@ def expand(word_mat, label_mat, fuse_sents, extra_sents):
 
 def special_prepare(paths):
     temps = list()
-    with open(paths['template'], 'r') as f:
+    with open(paths['temp'], 'r') as f:
         for line in f:
             parts = line.strip().split()
             temps.append(parts)
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     paths['train'] = prefix + 'train.json'
     paths['dev'] = prefix + 'dev.json'
     paths['test'] = prefix + 'test.json'
-    paths['template'] = prefix + 'template.txt'
+    paths['temp'] = prefix + 'template.txt'
     paths['slot_dir'] = prefix + 'slot'
     paths['extra'] = prefix + 'extra.csv'
     special_prepare(paths)
