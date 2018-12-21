@@ -10,7 +10,7 @@ special_prepare() 根据 template 采样实体进行填充、生成数据
 
 采样 general 的测试数据、添加到 special 的全体数据，减少过拟合
 
-将 extra 添加到 special 的训练数据，train 70% / dev 20% / test 10% 划分
+对 extra 标注、添加到 special 训练数据，train 70% / dev 20% / test 10% 划分
 
 #### 2.explore
 
