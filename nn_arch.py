@@ -1,15 +1,13 @@
-from keras.layers import Dense, LSTM, Dropout
-from keras.layers import TimeDistributed, Bidirectional
+from keras.layers import Dense, LSTM, Dropout, Bidirectional
 
 
 def rnn(embed_input, class_num):
     ra = LSTM(200, activation='tanh', return_sequences=True)
     ba = Bidirectional(ra, merge_mode='concat')
     da = Dense(class_num, activation='softmax')
-    ta = TimeDistributed(da)
     x = ba(embed_input)
     x = Dropout(0.5)(x)
-    return ta(x)
+    return da(x)
 
 
 def rnn_crf(embed_input, crf):
