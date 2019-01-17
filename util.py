@@ -49,13 +49,6 @@ def map_item(name, items):
         raise KeyError
 
 
-def load_triple(path):
-    triples = list()
-    for field1, field2, field3 in pd.read_csv(path).values:
-        triples.append((field1, field2, field3))
-    return triples
-
-
 def get_logger(name, path_dir):
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
