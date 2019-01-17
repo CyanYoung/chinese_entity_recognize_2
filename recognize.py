@@ -67,6 +67,7 @@ models = {'general_rnn': load_model(map_item('general_rnn', paths)),
 
 
 def predict(text, name, phase):
+    text = text.strip()
     seq = word2ind.texts_to_sequences([text])[0]
     pad_seq = pad_sequences([seq], maxlen=seq_len)
     model = map_item('_'.join([phase, name]), models)
