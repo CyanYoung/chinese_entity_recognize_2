@@ -27,12 +27,10 @@ def align(sents):
         for quaple in quaples:
             labels.append(quaple['label'])
         while len(text) > seq_len:
-            trunc_text = text[:seq_len]
-            trunc_labels = labels[:seq_len]
+            trunc_text, trunc_labels = text[:seq_len], labels[:seq_len]
             align_texts.append(trunc_text)
             label_mat.append(trunc_labels)
-            text = text[seq_len:]
-            labels = labels[seq_len:]
+            text, labels = text[seq_len:], labels[seq_len:]
         align_texts.append(text)
         label_mat.append(labels)
     return align_texts, label_mat
