@@ -9,6 +9,7 @@
 __pycache__
 
 # exceed
+train.json
 label_train.pkl
 
 # privacy
