@@ -95,10 +95,10 @@ def align_label(sents, path_label):
 
 def merge_vectorize(path_general_train, path_special_train):
     with open(path_general_train, 'r') as f:
-        general_sents = json.load(f)
+        sent1s = json.load(f)
     with open(path_special_train, 'r') as f:
-        special_sents = json.load(f)
-    sents = dict(general_sents, **special_sents)
+        sent2s = json.load(f)
+    sents = dict(sent1s, **sent2s)
     embed(sents, path_word2ind, path_word_vec, path_embed)
     label2ind(sents, path_label_ind)
 
