@@ -6,20 +6,6 @@ from sklearn.metrics import f1_score, accuracy_score
 from recognize import predict
 
 
-seq_len = 100
-
-path_sent = 'data/special/test.json'
-path_label_ind = 'feat/label_ind.pkl'
-with open(path_sent, 'r') as f:
-    sents = json.load(f)
-with open(path_label_ind, 'rb') as f:
-    label_inds = pk.load(f)
-
-slots = list(label_inds.keys())
-slots.remove('N')
-slots.remove('O')
-
-
 def trunc(sents):
     texts, label_mat = list(), list()
     for text, quaples in sents.items():
@@ -34,6 +20,22 @@ def trunc(sents):
         texts.append(text)
         label_mat.append(labels)
     return texts, label_mat
+
+
+seq_len = 100
+
+path_sent = 'data/special/test.json'
+path_label_ind = 'feat/label_ind.pkl'
+with open(path_sent, 'r') as f:
+    sents = json.load(f)
+with open(path_label_ind, 'rb') as f:
+    label_inds = pk.load(f)
+
+slots = list(label_inds.keys())
+slots.remove('N')
+slots.remove('O')
+
+texts, label_mat = trunc(sents)
 
 
 def flat(labels):
@@ -55,6 +57,5 @@ def test(name, phase, texts, label_mat):
 
 
 if __name__ == '__main__':
-    texts, label_mat = trunc(sents)
     test('rnn', 'special', texts, label_mat)
     test('rnn_crf', 'special', texts, label_mat)
