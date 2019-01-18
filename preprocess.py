@@ -112,8 +112,9 @@ def generate(temps, slots, num):
                     labels.extend(['I-' + part] * (len(entity) - 1))
             else:
                 word = select(part)
-                words.extend(word)
-                labels.extend(['O'] * len(word))
+                if word:
+                    words.extend(word)
+                    labels.extend(['O'] * len(word))
         word_mat.append(words)
         label_mat.append(labels)
     return word_mat, label_mat
