@@ -6,7 +6,7 @@ general_prepare() 对 univ 标注，special_prepare() 根据 template 采样实�
 
 进行填充、生成数据，() 表示可省去，[] 表示可替换同音、同义词
 
-label_sent() 对 extra 标注，采样 general 的测试数据添加到 special，减少过拟合
+label_sent() 对 extra 标注，general 测试数据添加到 special、减少过拟合
 
 #### 2.explore
 
