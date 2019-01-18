@@ -20,20 +20,20 @@ slots.remove('N')
 slots.remove('O')
 
 
-def align(sents):
-    align_texts, label_mat = list(), list()
+def trunc(sents):
+    texts, label_mat = list(), list()
     for text, quaples in sents.items():
         labels = list()
         for quaple in quaples:
             labels.append(quaple['label'])
         while len(text) > seq_len:
             trunc_text, trunc_labels = text[:seq_len], labels[:seq_len]
-            align_texts.append(trunc_text)
+            texts.append(trunc_text)
             label_mat.append(trunc_labels)
             text, labels = text[seq_len:], labels[seq_len:]
-        align_texts.append(text)
+        texts.append(text)
         label_mat.append(labels)
-    return align_texts, label_mat
+    return texts, label_mat
 
 
 def flat(labels):
@@ -43,9 +43,9 @@ def flat(labels):
     return flat_labels
 
 
-def test(name, phase, align_texts, label_mat):
+def test(name, phase, texts, label_mat):
     pred_mat = list()
-    for text in align_texts:
+    for text in texts:
         pairs = predict(text, name, phase)
         preds = [pred for word, pred in pairs]
         pred_mat.append(preds)
@@ -55,6 +55,6 @@ def test(name, phase, align_texts, label_mat):
 
 
 if __name__ == '__main__':
-    align_texts, label_mat = align(sents)
-    test('rnn', 'special', align_texts, label_mat)
-    test('rnn_crf', 'special', align_texts, label_mat)
+    texts, label_mat = trunc(sents)
+    test('rnn', 'special', texts, label_mat)
+    test('rnn_crf', 'special', texts, label_mat)
