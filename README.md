@@ -2,15 +2,11 @@
 
 #### 1.preprocess
 
-general_prepare() 将每行数据分割为 (word, pos, chunk, label) 二元组
+general_prepare() 对 univ 标注，special_prepare() 根据 template 采样实体
 
-special_prepare() 根据 template 采样实体进行填充、生成数据
+进行填充、生成数据，() 表示可省去，[] 表示可替换同音、同义词
 
-() 表示可省去，[] 表示可替换同音、同义词，make_name() 组合人名
-
-采样 general 的测试数据、添加到 special 的全体数据，减少过拟合
-
-对 extra 标注、添加到 special 训练数据，train 70% / dev 20% / test 10% 划分
+label_sent() 对 extra 标注，采样 general 的测试数据添加到 special，减少过拟合
 
 #### 2.explore
 
