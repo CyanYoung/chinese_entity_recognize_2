@@ -125,12 +125,6 @@ def sync_shuffle(list1, list2):
     return zip(*pairs)
 
 
-def sample(sents, num):
-    word_mat, label_mat = dict2list(sents)
-    word_mat, label_mat = sync_shuffle(word_mat, label_mat)
-    return word_mat[:num], label_mat[:num]
-
-
 def label_sent(path):
     sents = dict()
     for text, entity_str, label_str in pd.read_csv(path).values:
@@ -161,15 +155,14 @@ def label_sent(path):
     return sents
 
 
-def expand(word_mat, label_mat, fuse_sents, extra_sents):
-    fuse_word_mat, fuse_label_mat = sample(fuse_sents, num=2000)
-    word_mat.extend(fuse_word_mat)
-    label_mat.extend(fuse_label_mat)
+def expand(sents, gen_word_mat, gen_label_mat):
+    word_mat, label_mat = dict2list(sents)
+    word_mat.extend(gen_word_mat)
+    label_mat.extend(gen_label_mat)
     word_mat, label_mat = sync_shuffle(word_mat, label_mat)
     bound1 = int(len(word_mat) * 0.7)
     bound2 = int(len(word_mat) * 0.9)
     train_sents = list2dict(word_mat[:bound1], label_mat[:bound1])
-    train_sents.update(extra_sents)
     dev_sents = list2dict(word_mat[bound1:bound2], label_mat[bound1:bound2])
     test_sents = list2dict(word_mat[bound2:], label_mat[bound2:])
     return train_sents, dev_sents, test_sents
@@ -189,13 +182,14 @@ def special_prepare(paths):
         with open(os.path.join(paths['slot_dir'], file), 'r') as f:
             for line in f:
                 slots[label].append(line.strip())
-    names = make_name(pre_names, end_names, num=500)
+    names = make_name(pre_names, end_names, num=1000)
     slots['PER'].extend(names)
-    word_mat, label_mat = generate(temps, slots, num=1000)
+    gen_word_mat, gen_label_mat = generate(temps, slots, num=5000)
     with open(paths['fuse'], 'r') as f:
-        fuse_sents = json.load(f)
-    extra_sents = label_sent(paths['extra'])
-    train_sents, dev_sents, test_sents = expand(word_mat, label_mat, fuse_sents, extra_sents)
+        sent1s = json.load(f)
+    sent2s = label_sent(paths['extra'])
+    sents = dict(sent1s, **sent2s)
+    train_sents, dev_sents, test_sents = expand(sents, gen_word_mat, gen_label_mat)
     save(paths['train'], train_sents)
     save(paths['dev'], dev_sents)
     save(paths['test'], test_sents)
