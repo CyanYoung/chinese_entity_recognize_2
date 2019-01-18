@@ -128,8 +128,7 @@ def sync_shuffle(list1, list2):
 def label_sent(path):
     sents = dict()
     for text, entity_str, label_str in pd.read_csv(path).values:
-        entitys = entity_str.split()
-        labels = label_str.split()
+        entitys, labels = entity_str.split(), label_str.split()
         if len(entitys) != len(labels):
             print('skip: %s', text)
             continue
