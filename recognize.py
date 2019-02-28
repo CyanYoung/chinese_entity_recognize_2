@@ -73,7 +73,8 @@ def predict(text, name, phase):
     model = map_item('_'.join([phase, name]), models)
     probs = model.predict(pad_seq)[0]
     inds = np.argmax(probs, axis=1)
-    preds = [ind_labels[ind] for ind in inds[-len(text):]]
+    bound = min(len(text), seq_len)
+    preds = [ind_labels[ind] for ind in inds[-bound:]]
     pairs = list()
     for word, pred in zip(text, preds):
         pairs.append((word, pred))
