@@ -7,17 +7,13 @@ import re
 
 from random import shuffle, choice
 
-from util import load_word, load_pair, load_poly
+from util import load_pair, load_poly
 
 
 path_zh_en = 'dict/zh_en.csv'
-path_pre_name = 'dict/pre_name.txt'
-path_end_name = 'dict/end_name.txt'
 path_homo = 'dict/homo.csv'
 path_syno = 'dict/syno.csv'
 zh_en = load_pair(path_zh_en)
-pre_names = load_word(path_pre_name)
-end_names = load_word(path_end_name)
 homo_dict = load_poly(path_homo)
 syno_dict = load_poly(path_syno)
 
@@ -25,34 +21,6 @@ syno_dict = load_poly(path_syno)
 def save(path, sents):
     with open(path, 'w') as f:
         json.dump(sents, f, ensure_ascii=False, indent=4)
-
-
-def general_prepare(path_txt, path_json):
-    sents = dict()
-    pairs = list()
-    with open(path_txt, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                pair = dict()
-                word, label = line.split()
-                pair['word'] = word
-                pair['label'] = label
-                pairs.append(pair)
-            elif pairs:
-                text = ''.join([pair['word'] for pair in pairs])
-                sents[text] = pairs
-                pairs = []
-    save(path_json, sents)
-
-
-def make_name(pre_names, end_names, num):
-    names = list()
-    for i in range(num):
-        pre_name = choice(pre_names)
-        end_name = choice(end_names)
-        names.append(pre_name + end_name)
-    return names
 
 
 def dict2list(sents):
@@ -155,20 +123,37 @@ def label_sent(path):
     return sents
 
 
+def merge_sent(path):
+    sents = dict()
+    pairs = list()
+    with open(path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                pair = dict()
+                word, label = line.split()
+                pair['word'] = word
+                pair['label'] = label
+                pairs.append(pair)
+            elif pairs:
+                text = ''.join([pair['word'] for pair in pairs])
+                sents[text] = pairs
+                pairs = []
+    return sents
+
+
 def expand(sents, gen_word_mat, gen_label_mat):
     word_mat, label_mat = dict2list(sents)
     word_mat.extend(gen_word_mat)
     label_mat.extend(gen_label_mat)
     word_mat, label_mat = sync_shuffle(word_mat, label_mat)
-    bound1 = int(len(word_mat) * 0.7)
-    bound2 = int(len(word_mat) * 0.9)
-    train_sents = list2dict(word_mat[:bound1], label_mat[:bound1])
-    dev_sents = list2dict(word_mat[bound1:bound2], label_mat[bound1:bound2])
-    test_sents = list2dict(word_mat[bound2:], label_mat[bound2:])
-    return train_sents, dev_sents, test_sents
+    bound = int(len(word_mat) * 0.9)
+    train_sents = list2dict(word_mat[:bound], label_mat[:bound])
+    test_sents = list2dict(word_mat[bound:], label_mat[bound:])
+    return train_sents, test_sents
 
 
-def special_prepare(paths):
+def prepare(paths):
     temps = list()
     with open(paths['temp'], 'r') as f:
         for line in f:
@@ -182,37 +167,21 @@ def special_prepare(paths):
         with open(os.path.join(paths['slot_dir'], file), 'r') as f:
             for line in f:
                 slots[label].append(line.strip())
-    names = make_name(pre_names, end_names, num=1000)
-    slots['PER'].extend(names)
     gen_word_mat, gen_label_mat = generate(temps, slots, num=5000)
-    with open(paths['fuse'], 'r') as f:
-        sent1s = json.load(f)
+    sent1s = merge_sent(paths['univ'])
     sent2s = label_sent(paths['extra'])
     sents = dict(sent1s, **sent2s)
-    train_sents, dev_sents, test_sents = expand(sents, gen_word_mat, gen_label_mat)
+    train_sents, test_sents = expand(sents, gen_word_mat, gen_label_mat)
     save(paths['train'], train_sents)
-    save(paths['dev'], dev_sents)
     save(paths['test'], test_sents)
 
 
 if __name__ == '__main__':
-    prefix = 'data/general/'
-    path_txt = prefix + 'train.txt'
-    path_json = prefix + 'train.json'
-    general_prepare(path_txt, path_json)
-    path_txt = prefix + 'dev.txt'
-    path_json = prefix + 'dev.json'
-    general_prepare(path_txt, path_json)
-    path_txt = prefix + 'test.txt'
-    path_json = prefix + 'test.json'
-    general_prepare(path_txt, path_json)
     paths = dict()
-    paths['fuse'] = prefix + 'test.json'
-    prefix = 'data/special/'
-    paths['train'] = prefix + 'train.json'
-    paths['dev'] = prefix + 'dev.json'
-    paths['test'] = prefix + 'test.json'
-    paths['temp'] = prefix + 'template.txt'
-    paths['slot_dir'] = prefix + 'slot'
-    paths['extra'] = prefix + 'extra.csv'
-    special_prepare(paths)
+    paths['univ'] = 'data/univ.txt'
+    paths['train'] = 'data/train.json'
+    paths['test'] = 'data/test.json'
+    paths['temp'] = 'data/template.txt'
+    paths['slot_dir'] = 'data/slot'
+    paths['extra'] = 'data/extra.csv'
+    prepare(paths)

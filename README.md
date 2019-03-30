@@ -1,12 +1,10 @@
-## Chinese Entity Recognize 2018-10
+## Chinese Entity Recognize 2018-12
 
 #### 1.preprocess
 
-general_prepare() 对 univ 标注，special_prepare() 根据 template 采样实体
+generate() 根据 template 采样实体进行填充、生成数据，可省去、替换
 
-进行填充、生成数据，() 表示可省去，[] 表示可替换同音、同义词
-
-label_sent() 对 extra 标注，general 测试数据添加到 special、减少过拟合
+merge_sent() 和 label_sent() 分别对 univ、extra 标注，汇总、打乱
 
 #### 2.explore
 
@@ -14,13 +12,11 @@ label_sent() 对 extra 标注，general 测试数据添加到 special、减少�
 
 #### 3.represent
 
-merge_vectorize() 合并 general 与 special 得到 embed_mat 与 label_ind
-
-label2ind() 增设标签 N，vectorize() 分别截取或填充为定长序列
+label2ind() 增设标签 N，add_buf() 再对 cnn_sent 头部、尾部进行填充
 
 #### 4.build
 
-general 分别使用双向 rnn、rnn_crf，special 载入 general 模型后再训练
+train 80% / dev 20% 划分，通过 cnn、rnn 构建实体识别模型
 
 #### 5.recognize
 

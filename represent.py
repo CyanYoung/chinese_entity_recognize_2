@@ -5,14 +5,14 @@ import numpy as np
 
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
 
 from util import sent2label
 
 
 embed_len = 200
 max_vocab = 5000
-seq_len = 100
+win_len = 7
+seq_len = 50
 
 path_word_vec = 'feat/word_vec.pkl'
 path_word2ind = 'model/word2ind.pkl'
@@ -53,83 +53,53 @@ def label2ind(sents, path_label_ind):
         pk.dump(label_inds, f)
 
 
-def align_sent(sents, path_sent):
+def add_buf(seqs):
+    buf = [0] * int((win_len - 1) / 2)
+    buf_seqs = list()
+    for seq in seqs.tolist():
+        buf_seqs.append(buf + seq + buf)
+    return np.array(buf_seqs)
+
+
+def align_sent(sents, path_sent, extra):
     texts = sents.keys()
     with open(path_word2ind, 'rb') as f:
         model = pk.load(f)
     seqs = model.texts_to_sequences(texts)
-    align_seqs = list()
-    for seq in seqs:
-        while len(seq) > seq_len:
-            trunc_seq = seq[:seq_len]
-            align_seqs.append(trunc_seq)
-            seq = seq[seq_len:]
-        pad_seq = pad_sequences([seq], maxlen=seq_len)[0]
-        align_seqs.append(pad_seq)
-    align_seqs = np.array(align_seqs)
+    pad_seqs = pad_sequences(seqs, maxlen=seq_len)
+    if extra:
+        pad_seqs = add_buf(pad_seqs)
     with open(path_sent, 'wb') as f:
-        pk.dump(align_seqs, f)
+        pk.dump(pad_seqs, f)
 
 
 def align_label(sents, path_label):
     with open(path_label_ind, 'rb') as f:
         label_inds = pk.load(f)
-    class_num = len(label_inds)
     ind_mat = list()
     for pairs in sents.values():
         inds = list()
         for pair in pairs:
             inds.append(label_inds[pair['label']])
-        while len(inds) > seq_len:
-            trunc_inds = inds[:seq_len]
-            trunc_inds = to_categorical(trunc_inds, num_classes=class_num)
-            ind_mat.append(trunc_inds)
-            inds = inds[seq_len:]
-        pad_inds = pad_sequences([inds], maxlen=seq_len)[0]
-        pad_inds = to_categorical(pad_inds, num_classes=class_num)
-        ind_mat.append(pad_inds)
-    ind_mat = np.array(ind_mat)
+        ind_mat.append(inds)
+    pad_inds = pad_sequences(ind_mat, maxlen=seq_len)
     with open(path_label, 'wb') as f:
-        pk.dump(ind_mat, f)
+        pk.dump(pad_inds, f)
 
 
-def merge_vectorize(path_general_train, path_special_train):
-    with open(path_general_train, 'r') as f:
-        sent1s = json.load(f)
-    with open(path_special_train, 'r') as f:
-        sent2s = json.load(f)
-    sents = dict(sent1s, **sent2s)
+def vectorize(path_data, path_cnn_sent, path_rnn_sent, path_label):
+    with open(path_data, 'r') as f:
+        sents = json.load(f)
     embed(sents, path_word2ind, path_word_vec, path_embed)
     label2ind(sents, path_label_ind)
-
-
-def vectorize(paths):
-    with open(paths['data'], 'r') as f:
-        sents = json.load(f)
-    align_sent(sents, paths['sent'])
-    align_label(sents, paths['label'])
+    align_sent(sents, path_cnn_sent, extra=True)
+    align_sent(sents, path_rnn_sent, extra=False)
+    align_label(sents, path_label)
 
 
 if __name__ == '__main__':
-    path_general_train = 'data/general/train.json'
-    path_special_train = 'data/special/train.json'
-    merge_vectorize(path_general_train, path_special_train)
-    paths = dict()
-    prefix = 'feat/general/'
-    paths['data'] = path_general_train
-    paths['sent'] = prefix + 'sent_train.pkl'
-    paths['label'] = prefix + 'label_train.pkl'
-    vectorize(paths)
-    paths['data'] = 'data/general/dev.json'
-    paths['sent'] = prefix + 'sent_dev.pkl'
-    paths['label'] = prefix + 'label_dev.pkl'
-    vectorize(paths)
-    prefix = 'feat/special/'
-    paths['data'] = path_special_train
-    paths['sent'] = prefix + 'sent_train.pkl'
-    paths['label'] = prefix + 'label_train.pkl'
-    vectorize(paths)
-    paths['data'] = 'data/special/dev.json'
-    paths['sent'] = prefix + 'sent_dev.pkl'
-    paths['label'] = prefix + 'label_dev.pkl'
-    vectorize(paths)
+    path_data = 'data/train.json'
+    path_cnn_sent = 'feat/cnn_sent_train.pkl'
+    path_rnn_sent = 'feat/rnn_sent_train.pkl'
+    path_label = 'feat/label_train.pkl'
+    vectorize(path_data, path_cnn_sent, path_rnn_sent, path_label)

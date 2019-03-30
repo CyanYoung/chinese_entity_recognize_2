@@ -45,9 +45,9 @@ def merge(pairs):
     return make_dict(entitys, labels)
 
 
-def response(text, name, phase):
+def response(text, name):
     data = dict()
-    pairs = predict(text, name, phase)
+    pairs = predict(text, name)
     slot_dict = merge(pairs)
     data['content'] = text
     data['slot'] = slot_dict
@@ -59,5 +59,5 @@ def response(text, name, phase):
 if __name__ == '__main__':
     while True:
         text = input('text: ')
-        print(response(text, 'rnn', 'special'))
-        print(response(text, 'rnn_crf', 'special'))
+        print(response(text, 'cnn'))
+        print(response(text, 'rnn'))

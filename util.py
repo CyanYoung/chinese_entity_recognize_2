@@ -7,14 +7,6 @@ import logging.handlers as handlers
 from time import strftime
 
 
-def load_word(path):
-    words = list()
-    with open(path, 'r') as f:
-        for line in f:
-            words.append(line.strip())
-    return words
-
-
 def load_pair(path):
     vocab = dict()
     for word1, word2 in pd.read_csv(path).values:

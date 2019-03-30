@@ -1,14 +1,14 @@
 import pickle as pk
 
+import numpy as np
+
 from keras.models import Model
 from keras.layers import Input, Embedding
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.utils import plot_model
 
-from keras_contrib.layers import CRF
-
-from nn_arch import rnn, rnn_crf
+from nn_arch import cnn, rnn
 
 from util import map_item
 
@@ -17,34 +17,29 @@ batch_size = 32
 
 path_embed = 'feat/embed.pkl'
 path_label_ind = 'feat/label_ind.pkl'
+path_cnn_sent = 'feat/cnn_sent_train.pkl'
+path_rnn_sent = 'feat/rnn_sent_train.pkl'
+path_label = 'feat/label_train.pkl'
 with open(path_embed, 'rb') as f:
     embed_mat = pk.load(f)
 with open(path_label_ind, 'rb') as f:
     label_inds = pk.load(f)
+with open(path_cnn_sent, 'rb') as f:
+    cnn_sents = pk.load(f)
+with open(path_rnn_sent, 'rb') as f:
+    rnn_sents = pk.load(f)
+with open(path_label, 'rb') as f:
+    labels = pk.load(f)
 
 class_num = len(label_inds)
 
-funcs = {'rnn': rnn,
-         'rnn_crf': rnn_crf}
+funcs = {'cnn': cnn,
+         'rnn': rnn}
 
-paths = {'general_rnn': 'model/general/rnn.h5',
-         'general_rnn_crf': 'model/general/rnn_crf.h5',
-         'special_rnn': 'model/special/rnn.h5',
-         'special_rnn_crf': 'model/special/rnn_crf.h5',
-         'rnn_plot': 'model/plot/rnn.png',
-         'rnn_crf_plot': 'model/plot/rnn_crf.png'}
-
-
-def load_feat(path_feats):
-    with open(path_feats['sent_train'], 'rb') as f:
-        train_sents = pk.load(f)
-    with open(path_feats['label_train'], 'rb') as f:
-        train_labels = pk.load(f)
-    with open(path_feats['sent_dev'], 'rb') as f:
-        dev_sents = pk.load(f)
-    with open(path_feats['label_dev'], 'rb') as f:
-        dev_labels = pk.load(f)
-    return train_sents, train_labels, dev_sents, dev_labels
+paths = {'cnn': 'model/cnn.h5',
+         'rnn': 'model/rnn.h5',
+         'cnn_plot': 'model/plot/cnn.png',
+         'rnn_plot': 'model/plot/rnn.png'}
 
 
 def compile(name, embed_mat, seq_len, class_num):
@@ -54,45 +49,23 @@ def compile(name, embed_mat, seq_len, class_num):
     input = Input(shape=(seq_len,))
     embed_input = embed(input)
     func = map_item(name, funcs)
-    if name == 'rnn_crf':
-        crf = CRF(class_num)
-        output = func(embed_input, crf)
-        loss, acc = crf.loss_function, crf.accuracy
-    else:
-        output = func(embed_input, class_num)
-        loss, acc = 'categorical_crossentropy', 'accuracy'
+    output = func(embed_input, class_num)
     model = Model(input, output)
     model.summary()
     plot_model(model, map_item(name + '_plot', paths), show_shapes=True)
-    model.compile(loss=loss, optimizer=Adam(lr=0.001), metrics=[acc])
+    model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001), metrics=['accuracy'])
     return model
 
 
-def fit(name, epoch, embed_mat, class_num, path_feats, phase):
-    train_sents, train_labels, dev_sents, dev_labels = load_feat(path_feats)
-    seq_len = len(train_sents[0])
+def fit(name, epoch, embed_mat, class_num, sents, labels):
+    seq_len = len(sents[0])
     model = compile(name, embed_mat, seq_len, class_num)
-    if phase == 'special':
-        model.load_weights(map_item('_'.join(['general', name]), paths))
-    path = map_item('_'.join([phase, name]), paths)
-    check_point = ModelCheckpoint(path, monitor='val_loss', verbose=True, save_best_only=True)
-    model.fit(train_sents, train_labels, batch_size=batch_size, epochs=epoch,
-              verbose=True, callbacks=[check_point], validation_data=(dev_sents, dev_labels))
+    check_point = ModelCheckpoint(map_item(name, paths), monitor='val_loss', verbose=True, save_best_only=True)
+    labels = np.expand_dims(labels, -1)
+    model.fit(sents, labels, batch_size=batch_size, epochs=epoch,
+              verbose=True, callbacks=[check_point], validation_split=0.2)
 
 
 if __name__ == '__main__':
-    path_feats = dict()
-    prefix = 'feat/general/'
-    path_feats['sent_train'] = prefix + 'sent_train.pkl'
-    path_feats['label_train'] = prefix + 'label_train.pkl'
-    path_feats['sent_dev'] = prefix + 'sent_dev.pkl'
-    path_feats['label_dev'] = prefix + 'label_dev.pkl'
-    fit('rnn', 10, embed_mat, class_num, path_feats, 'general')
-    fit('rnn_crf', 10, embed_mat, class_num, path_feats, 'general')
-    prefix = 'feat/special/'
-    path_feats['sent_train'] = prefix + 'sent_train.pkl'
-    path_feats['label_train'] = prefix + 'label_train.pkl'
-    path_feats['sent_dev'] = prefix + 'sent_dev.pkl'
-    path_feats['label_dev'] = prefix + 'label_dev.pkl'
-    fit('rnn', 10, embed_mat, class_num, path_feats, 'special')
-    fit('rnn_crf', 10, embed_mat, class_num, path_feats, 'special')
+    fit('cnn', 10, embed_mat, class_num, cnn_sents, labels)
+    fit('rnn', 10, embed_mat, class_num, rnn_sents, labels)

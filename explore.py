@@ -7,11 +7,15 @@ from collections import Counter
 import matplotlib.pyplot as plt
 
 
+path_vocab_freq = 'stat/vocab_freq.json'
+path_len_freq = 'stat/len_freq.json'
+path_slot_freq = 'stat/slot_freq.json'
+
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = ['Arial Unicode MS']
 
 
-def count(path_freq, items, field, name):
+def count(path_freq, items, field):
     pairs = Counter(items)
     sort_items = [item for item, freq in pairs.most_common()]
     sort_freqs = [freq for item, freq in pairs.most_common()]
@@ -20,12 +24,11 @@ def count(path_freq, items, field, name):
         item_freq[item] = freq
     with open(path_freq, 'w') as f:
         json.dump(item_freq, f, ensure_ascii=False, indent=4)
-    plot_freq(sort_items, sort_freqs, field, name, u_bound=20)
+    plot_freq(sort_items, sort_freqs, field, u_bound=20)
 
 
-def plot_freq(items, freqs, field, name, u_bound):
+def plot_freq(items, freqs, field, u_bound):
     inds = np.arange(len(items))
-    plt.title(name)
     plt.bar(inds[:u_bound], freqs[:u_bound], width=0.5)
     plt.xlabel(field)
     plt.ylabel('freq')
@@ -33,8 +36,8 @@ def plot_freq(items, freqs, field, name, u_bound):
     plt.show()
 
 
-def statistic(paths, name):
-    with open(paths['train'], 'r') as f:
+def statistic(path_train):
+    with open(path_train, 'r') as f:
         sents = json.load(f)
     texts = sents.keys()
     slots = list()
@@ -44,23 +47,12 @@ def statistic(paths, name):
                 slots.append(quaple['label'])
     text_str = ''.join(texts)
     text_lens = [len(text) for text in texts]
-    count(paths['vocab_freq'], text_str, 'vocab', name)
-    count(paths['len_freq'], text_lens, 'text_len', name)
-    count(paths['slot_freq'], slots, 'slot', name)
-    print('%s slot_per_sent: %d' % (name, int(len(slots) / len(texts))))
+    count(path_vocab_freq, text_str, 'vocab')
+    count(path_len_freq, text_lens, 'text_len')
+    count(path_slot_freq, slots, 'slot')
+    print('slot_per_sent: %d' % int(len(slots) / len(texts)))
 
 
 if __name__ == '__main__':
-    paths = dict()
-    prefix = 'stat/general/'
-    paths['train'] = 'data/general/train.json'
-    paths['vocab_freq'] = prefix + 'vocab_freq.json'
-    paths['len_freq'] = prefix + 'len_freq.json'
-    paths['slot_freq'] = prefix + 'slot_freq.json'
-    statistic(paths, 'general')
-    prefix = 'stat/special/'
-    paths['train'] = 'data/special/train.json'
-    paths['vocab_freq'] = prefix + 'vocab_freq.json'
-    paths['len_freq'] = prefix + 'len_freq.json'
-    paths['slot_freq'] = prefix + 'slot_freq.json'
-    statistic(paths, 'special')
+    path_train = 'data/train.json'
+    statistic(path_train)

@@ -6,25 +6,9 @@ from sklearn.metrics import f1_score, accuracy_score
 from recognize import predict
 
 
-def trunc(sents):
-    texts, label_mat = list(), list()
-    for text, quaples in sents.items():
-        labels = list()
-        for quaple in quaples:
-            labels.append(quaple['label'])
-        while len(text) > seq_len:
-            trunc_text, trunc_labels = text[:seq_len], labels[:seq_len]
-            texts.append(trunc_text)
-            label_mat.append(trunc_labels)
-            text, labels = text[seq_len:], labels[seq_len:]
-        texts.append(text)
-        label_mat.append(labels)
-    return texts, label_mat
+seq_len = 50
 
-
-seq_len = 100
-
-path_sent = 'data/special/test.json'
+path_sent = 'data/test.json'
 path_label_ind = 'feat/label_ind.pkl'
 with open(path_sent, 'r') as f:
     sents = json.load(f)
@@ -35,8 +19,6 @@ slots = list(label_inds.keys())
 slots.remove('N')
 slots.remove('O')
 
-texts, label_mat = trunc(sents)
-
 
 def flat(labels):
     flat_labels = list()
@@ -45,10 +27,15 @@ def flat(labels):
     return flat_labels
 
 
-def test(name, phase, texts, label_mat):
-    pred_mat = list()
-    for text in texts:
-        pairs = predict(text, name, phase)
+def test(name, sents):
+    label_mat, pred_mat = list(), list()
+    for text, quaples in sents.items():
+        labels = list()
+        for quaple in quaples:
+            labels.append(quaple['label'])
+        bound = len(text) - seq_len if len(text) > seq_len else 0
+        label_mat.append(labels[bound:])
+        pairs = predict(text, name)
         preds = [pred for word, pred in pairs]
         pred_mat.append(preds)
     labels, preds = flat(label_mat), flat(pred_mat)
@@ -57,5 +44,5 @@ def test(name, phase, texts, label_mat):
 
 
 if __name__ == '__main__':
-    test('rnn', 'special', texts, label_mat)
-    test('rnn_crf', 'special', texts, label_mat)
+    test('cnn', sents)
+    test('rnn', sents)
