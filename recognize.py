@@ -37,7 +37,6 @@ models = {'cnn': load_model(map_item('cnn', paths)),
 
 
 def predict(text, name):
-    text = text.strip()
     seq = word2ind.texts_to_sequences([text])[0]
     pad_seq = pad_sequences([seq], maxlen=seq_len)
     if name == 'cnn':
