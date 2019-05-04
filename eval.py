@@ -30,10 +30,10 @@ paths = {'cnn': 'metric/cnn.csv',
 
 def test(name, sents):
     flat_labels, flat_preds = [0], [0]
-    for text, quaples in sents.items():
+    for text, pairs in sents.items():
         labels = list()
-        for quaple in quaples:
-            labels.append(label_inds[quaple['label']])
+        for pair in pairs:
+            labels.append(label_inds[pair['label']])
         bound = len(text) - seq_len if len(text) > seq_len else 0
         flat_labels.extend(labels[bound:])
         flat_preds.extend(predict(text, name))
