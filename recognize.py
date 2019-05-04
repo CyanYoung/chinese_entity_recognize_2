@@ -43,13 +43,15 @@ def predict(text, name):
         pad_seq = add_buf(pad_seq)
     model = map_item(name, models)
     probs = model.predict(pad_seq)[0]
-    inds = np.argmax(probs, axis=1)
     bound = min(len(text), seq_len)
-    preds = [ind_labels[ind] for ind in inds[-bound:]]
-    pairs = list()
-    for word, pred in zip(text, preds):
-        pairs.append((word, pred))
-    return pairs
+    preds = np.argmax(probs, axis=1)[-bound:]
+    if __name__ == '__main__':
+        pairs = list()
+        for word, pred in zip(text, preds):
+            pairs.append((word, ind_labels[pred]))
+        return pairs
+    else:
+        return preds
 
 
 if __name__ == '__main__':
