@@ -6,8 +6,6 @@ import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
-from util import sent2label
-
 
 embed_len = 200
 max_vocab = 5000
@@ -43,7 +41,8 @@ def embed(sents, path_word2ind, path_word_vec, path_embed):
 def label2ind(sents, path_label_ind):
     labels = list()
     for pairs in sents.values():
-        labels.extend(sent2label(pairs))
+        for pair in pairs:
+            labels.append(pair['label'])
     labels = sorted(list(set(labels)))
     label_inds = dict()
     label_inds['N'] = 0
