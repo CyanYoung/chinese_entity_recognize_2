@@ -88,12 +88,6 @@ def generate(temps, slots, num):
     return word_mat, label_mat
 
 
-def sync_shuffle(list1, list2):
-    pairs = list(zip(list1, list2))
-    shuffle(pairs)
-    return zip(*pairs)
-
-
 def label_sent(path):
     sents = dict()
     for text, entity_str, label_str in pd.read_csv(path).values:
